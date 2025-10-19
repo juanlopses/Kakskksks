@@ -1,0 +1,14 @@
+{
+  "name": "api-descargador-videos",
+  "version": "1.0.0",
+  "description": "API en Node.js para descargar videos de YouTube, TikTok y Facebook usando Delirius API (traducido al español).",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "node-fetch": "^3.3.2"
+  }
+}
