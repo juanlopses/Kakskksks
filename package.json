@@ -1,13 +1,14 @@
 {
-  "name": "api-descargador-videos",
+  "name": "api-multimedia",
   "version": "1.0.0",
-  "description": "API en Node.js para descargar videos de YouTube, TikTok y Facebook usando Delirius API (traducido al español).",
-  "main": "index.js",
+  "description": "API en Node.js para descargar contenido multimedia (YouTube, TikTok, Facebook) con respuestas en español.",
+  "main": "server.js",
   "type": "module",
   "scripts": {
-    "start": "node index.js"
+    "start": "node server.js"
   },
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^4.19.2",
     "node-fetch": "^3.3.2"
   }
