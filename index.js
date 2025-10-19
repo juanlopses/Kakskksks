@@ -1,174 +1,189 @@
 import express from "express";
+import cors from "cors";
 import fetch from "node-fetch";
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-
-// Middleware
+app.use(cors());
 app.use(express.json());
 
-// 🧾 Documentación principal
+// 📘 Página raíz con documentación
 app.get("/", (req, res) => {
-  res.send(`
-    <h1>🎬 API DESCARGADOR DE VIDEOS</h1>
-    <p>API creada con Node.js para descargar videos de <b>YouTube</b>, <b>TikTok</b> y <b>Facebook</b> usando <a href="https://delirius-apiofc.vercel.app/" target="_blank">Delirius API</a>.</p>
-
-    <h2>📘 Endpoints disponibles:</h2>
-    <ul>
-      <li><b>/api/ytmp3?url=</b><i>[enlace de YouTube]</i> → Descargar audio MP3 de YouTube</li>
-      <li><b>/api/ytmp4?url=</b><i>[enlace de YouTube]</i> → Descargar video MP4 de YouTube</li>
-      <li><b>/api/tiktok?url=</b><i>[enlace de TikTok]</i> → Descargar video de TikTok (sin marca de agua)</li>
-      <li><b>/api/facebook?url=</b><i>[enlace de Facebook]</i> → Descargar video de Facebook (SD o HD)</li>
-    </ul>
-
-    <h3>🧠 Ejemplo de uso:</h3>
-    <code>GET /api/ytmp4?url=https://youtu.be/TdrL3QxjyVw</code><br>
-    <code>GET /api/tiktok?url=https://vt.tiktok.com/ZSB2HNoKR/</code><br>
-    <code>GET /api/facebook?url=https://fb.watch/rOnqYjdiUo/</code>
-
-    <p>💬 Todas las respuestas están en <b>español</b> con enlaces de descarga y metadatos del video.</p>
-  `);
+  res.json({
+    mensaje: "Bienvenido a la API de Descargas Multimedia 🌐",
+    descripción: "Convierte y descarga contenido de YouTube, TikTok y Facebook (respuestas traducidas al español).",
+    rutas_disponibles: {
+      youtube_mp3: "/api/ytmp3?url=<enlace_de_youtube>",
+      youtube_mp4: "/api/ytmp4?url=<enlace_de_youtube>",
+      tiktok: "/api/tiktok?url=<enlace_de_tiktok>",
+      facebook: "/api/facebook?url=<enlace_de_facebook>"
+    },
+    ejemplo: {
+      ytmp3: "/api/ytmp3?url=https://youtu.be/TdrL3QxjyVw",
+      ytmp4: "/api/ytmp4?url=https://youtu.be/TdrL3QxjyVw",
+      tiktok: "/api/tiktok?url=https://vt.tiktok.com/ZSB2HNoKR/",
+      facebook: "/api/facebook?url=https://fb.watch/rOnqYjdiUo/"
+    }
+  });
 });
 
-// 🎵 YTMP3 (descargar audio de YouTube)
+// 🔊 YouTube MP3
 app.get("/api/ytmp3", async (req, res) => {
-  const videoUrl = req.query.url;
-  if (!videoUrl) return res.status(400).json({ error: "Falta el parámetro 'url'." });
+  const { url } = req.query;
+  if (!url) return res.status(400).json({ éxito: false, mensaje: "Falta el parámetro 'url'." });
 
   try {
-    const response = await fetch(`https://delirius-apiofc.vercel.app/download/ytmp3?url=${encodeURIComponent(videoUrl)}`);
-    const data = await response.json();
+    const respuesta = await fetch(`https://delirius-apiofc.vercel.app/download/ytmp3?url=${url}`);
+    const data = await respuesta.json();
 
+    if (!data.status) return res.status(404).json({ éxito: false, mensaje: "No se pudo obtener el audio." });
+
+    const d = data.data;
     res.json({
-      éxito: data.status,
+      éxito: true,
       plataforma: "YouTube (MP3)",
-      título: data.data.title,
-      id: data.data.id,
-      autor: data.data.author,
-      imagen: data.data.image,
-      imagen_alta_resolución: data.data.image_max_resolution,
-      privado: data.data.private,
-      vistas: data.data.views,
-      me_gusta: data.data.likes,
-      comentarios: data.data.comments,
-      categoría: data.data.category,
-      duración_segundos: data.data.duration,
+      título: d.title,
+      id: d.id,
+      autor: d.author,
+      imagen: d.image,
+      imagen_alta_resolución: d.image_max_resolution,
+      privado: d.private,
+      vistas: d.views,
+      me_gusta: d.likes,
+      comentarios: d.comments,
+      categoría: d.category,
+      duración_segundos: d.duration,
       descarga: {
-        nombre_archivo: data.data.download.filename,
-        calidad: data.data.download.quality,
-        tamaño: data.data.download.size,
-        extensión: data.data.download.extension,
-        enlace: data.data.download.url
+        nombre_archivo: d.download.filename,
+        calidad: d.download.quality,
+        tamaño: d.download.size,
+        extensión: d.download.extension,
+        enlace: d.download.url
       },
+      consultado_en: new Date().toLocaleString("es-PE"),
       mensaje: "✅ Audio de YouTube obtenido correctamente."
     });
   } catch (error) {
-    console.error("Error al obtener el audio:", error);
-    res.status(500).json({ éxito: false, mensaje: "❌ Error al procesar la solicitud de YouTube MP3." });
+    res.status(500).json({ éxito: false, mensaje: "Error interno del servidor." });
   }
 });
 
-// 🎬 YTMP4 (descargar video de YouTube)
+// 🎬 YouTube MP4
 app.get("/api/ytmp4", async (req, res) => {
-  const videoUrl = req.query.url;
-  if (!videoUrl) return res.status(400).json({ error: "Falta el parámetro 'url'." });
+  const { url } = req.query;
+  if (!url) return res.status(400).json({ éxito: false, mensaje: "Falta el parámetro 'url'." });
 
   try {
-    const response = await fetch(`https://delirius-apiofc.vercel.app/download/ytmp4?url=${encodeURIComponent(videoUrl)}`);
-    const data = await response.json();
+    const respuesta = await fetch(`https://delirius-apiofc.vercel.app/download/ytmp4?url=${url}`);
+    const data = await respuesta.json();
 
+    if (!data.status) return res.status(404).json({ éxito: false, mensaje: "No se pudo obtener el video." });
+
+    const d = data.data;
     res.json({
-      éxito: data.status,
+      éxito: true,
       plataforma: "YouTube (MP4)",
-      título: data.data.title,
-      id: data.data.id,
-      autor: data.data.author,
-      imagen: data.data.image,
-      imagen_alta_resolución: data.data.image_max_resolution,
-      privado: data.data.private,
-      vistas: data.data.views,
-      me_gusta: data.data.likes,
-      comentarios: data.data.comments,
-      categoría: data.data.category,
-      duración_segundos: data.data.duration,
+      título: d.title,
+      id: d.id,
+      autor: d.author,
+      imagen: d.image,
+      imagen_alta_resolución: d.image_max_resolution,
+      privado: d.private,
+      vistas: d.views,
+      me_gusta: d.likes,
+      comentarios: d.comments,
+      categoría: d.category,
+      duración_segundos: d.duration,
       descarga: {
-        nombre_archivo: data.data.download.filename,
-        calidad: data.data.download.quality,
-        tamaño: data.data.download.size,
-        extensión: data.data.download.extension,
-        enlace: data.data.download.url
+        nombre_archivo: d.download.filename,
+        calidad: d.download.quality,
+        tamaño: d.download.size,
+        extensión: d.download.extension,
+        enlace: d.download.url
       },
+      consultado_en: new Date().toLocaleString("es-PE"),
       mensaje: "✅ Video de YouTube obtenido correctamente."
     });
   } catch (error) {
-    console.error("Error al obtener el video:", error);
-    res.status(500).json({ éxito: false, mensaje: "❌ Error al procesar la solicitud de YouTube MP4." });
+    res.status(500).json({ éxito: false, mensaje: "Error interno del servidor." });
   }
 });
 
 // 🎥 TikTok
 app.get("/api/tiktok", async (req, res) => {
-  const videoUrl = req.query.url;
-  if (!videoUrl) return res.status(400).json({ error: "Falta el parámetro 'url'." });
+  const { url } = req.query;
+  if (!url) return res.status(400).json({ éxito: false, mensaje: "Falta el parámetro 'url'." });
 
   try {
-    const response = await fetch(`https://delirius-apiofc.vercel.app/download/tiktok?url=${encodeURIComponent(videoUrl)}`);
-    const data = await response.json();
+    const respuesta = await fetch(`https://delirius-apiofc.vercel.app/download/tiktok?url=${url}`);
+    const data = await respuesta.json();
 
+    if (!data.status) return res.status(404).json({ éxito: false, mensaje: "No se pudo obtener el video de TikTok." });
+
+    const d = data.data;
+    const media = d.meta.media[0];
     res.json({
-      éxito: data.status,
+      éxito: true,
       plataforma: "TikTok",
-      id: data.data.id,
-      región: data.data.region,
-      título: data.data.title,
-      duración_segundos: data.data.duration,
-      reproducciones: data.data.repro,
-      me_gusta: data.data.like,
-      compartidos: data.data.share,
-      comentarios: data.data.comment,
-      descargas_totales: data.data.download,
-      publicado: data.data.published,
+      id: d.id,
+      región: d.region,
+      título: d.title,
+      duración_segundos: d.duration,
+      reproducciones: d.repro,
+      me_gusta: d.like,
+      compartidos: d.share,
+      comentarios: d.comment,
+      descargas_totales: d.download,
+      publicado: d.published,
       autor: {
-        id: data.data.author.id,
-        usuario: data.data.author.username,
-        nombre: data.data.author.nickname
+        id: d.author.id,
+        usuario: d.author.username,
+        nombre: d.author.nickname
       },
       música: {
-        título: data.data.music.title,
-        autor: data.data.music.author,
-        duración_segundos: data.data.music.duration
+        título: d.music.title,
+        autor: d.music.author,
+        duración_segundos: d.music.duration
       },
-      enlaces: data.data.meta.media[0],
+      enlaces: {
+        tipo: media.type,
+        tamaño_original: media.size_org,
+        tamaño_hd: media.size_hd,
+        video_original: media.org,
+        video_hd: media.hd
+      },
+      consultado_en: new Date().toLocaleString("es-PE"),
       mensaje: "✅ Video de TikTok obtenido correctamente."
     });
   } catch (error) {
-    console.error("Error al obtener el video de TikTok:", error);
-    res.status(500).json({ éxito: false, mensaje: "❌ Error al procesar la solicitud de TikTok." });
+    res.status(500).json({ éxito: false, mensaje: "Error interno del servidor." });
   }
 });
 
 // 📘 Facebook
 app.get("/api/facebook", async (req, res) => {
-  const videoUrl = req.query.url;
-  if (!videoUrl) return res.status(400).json({ error: "Falta el parámetro 'url'." });
+  const { url } = req.query;
+  if (!url) return res.status(400).json({ éxito: false, mensaje: "Falta el parámetro 'url'." });
 
   try {
-    const response = await fetch(`https://delirius-apiofc.vercel.app/download/facebook?url=${encodeURIComponent(videoUrl)}`);
-    const data = await response.json();
+    const respuesta = await fetch(`https://delirius-apiofc.vercel.app/download/facebook?url=${url}`);
+    const data = await respuesta.json();
+
+    if (!data.status) return res.status(404).json({ éxito: false, mensaje: "No se pudo obtener el video de Facebook." });
 
     res.json({
       éxito: true,
       plataforma: "Facebook",
-      título: data.title,
-      disponible_hd: data.isHdAvailable,
-      enlaces: data.urls,
+      título: data.data.title,
+      disponible_hd: data.data.hd,
+      enlaces: data.data.url,
+      consultado_en: new Date().toLocaleString("es-PE"),
       mensaje: "✅ Video de Facebook obtenido correctamente."
     });
   } catch (error) {
-    console.error("Error al obtener el video de Facebook:", error);
-    res.status(500).json({ éxito: false, mensaje: "❌ Error al procesar la solicitud de Facebook." });
+    res.status(500).json({ éxito: false, mensaje: "Error interno del servidor." });
   }
 });
 
-// 🚀 Iniciar servidor
-app.listen(PORT, () => console.log(`✅ Servidor corriendo en http://localhost:${PORT}`));
+// 🚀 Servidor
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Servidor ejecutándose en el puerto ${PORT}`));
